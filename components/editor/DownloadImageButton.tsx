@@ -17,7 +17,7 @@ interface DownloadImageButtonProps {
 }
 
 /**
- * 生成された画像をダウンロードするためのボタンコンポーネント
+ * 生成された画像をダウンロードするためのボタンコンポーネント (Liquid Glass Style - シンプル版)
  */
 export function DownloadImageButton({
     base64Data,
@@ -63,11 +63,19 @@ export function DownloadImageButton({
 
     const isDisabled = !base64Data || isProcessing;
 
+    // ダウンロードボタンのスタイルをシンプル化
+    const baseStyle =
+        'w-full font-semibold text-base py-3 px-4 rounded-lg shadow-md transition-all duration-300';
+    const enabledStyle =
+        'bg-green-600 hover:bg-green-500 active:scale-[0.99] text-white'; // 緑系にシンプル化
+    const disabledStyle =
+        'bg-gray-700/50 text-gray-400 cursor-not-allowed shadow-inner';
+
     return (
         <Button
             onClick={handleDownload}
             disabled={isDisabled}
-            className="w-full font-bold py-2 px-4 shadow-lg transition-colors"
+            className={`${baseStyle} ${isDisabled ? disabledStyle : enabledStyle}`}
         >
             <Download className="mr-2 h-5 w-5" />
             {isProcessing

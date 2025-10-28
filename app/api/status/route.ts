@@ -24,6 +24,8 @@ export async function GET(request: Request) {
         );
     }
 
+    console.log(pyData);
+
     // バックエンドからのステータス/結果をそのままフロントエンドに返す
     // { status: 'IN_PROGRESS' | 'COMPLETED', progress: number, dataUrl?: string }
     return NextResponse.json(pyData, { status: 200 });
