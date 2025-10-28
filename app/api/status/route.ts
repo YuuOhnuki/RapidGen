@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get('taskId');
+
     if (!taskId) {
         return NextResponse.json(
             { error: 'Task ID is required.' },
@@ -23,8 +24,6 @@ export async function GET(request: Request) {
             { status: pyResponse.status }
         );
     }
-
-    console.log(pyData);
 
     // バックエンドからのステータス/結果をそのままフロントエンドに返す
     // { status: 'IN_PROGRESS' | 'COMPLETED', progress: number, dataUrl?: string }

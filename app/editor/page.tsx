@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Sparkles, Menu, X, Zap } from 'lucide-react';
+import { Loader2, Menu, X, Zap } from 'lucide-react';
 import { Sidebar } from '@/components/editor/Sidebar';
 import { ImageDisplayArea } from '@/components/editor/ImageDisplayArea';
 import { useSearchParams } from 'next/navigation';
@@ -29,20 +29,23 @@ const stylePresets = [
 export default function EditorInterface({ params }: EditorInterfaceProps) {
     const searchParams = useSearchParams();
 
-    // クエリパラメータから画像URLを取得 (これはURLエンコードされた文字列のまま)
-    const encodedUrlFromQuery = searchParams.get('uploadedImageUrl');
+    // クエリパラメータから画像IDを取得
+    const imageId = searchParams.get('imageId');
 
-    // デコード処理
-    const initialUploadedImageUrl = encodedUrlFromQuery
-        ? decodeURIComponent(encodedUrlFromQuery)
-        : null;
+    // sessionStorageから画像データを取得（クライアントサイドでのみ実行）
+    const [initialUploadedImageUrl, setInitialUploadedImageUrl] = useState<
+        string | null
+    >(null);
 
     console.log('--- DEBUG START ---');
-    console.log('1. Encoded URL from Query:', encodedUrlFromQuery);
-    console.log('2. Decoded URL (Initial):', initialUploadedImageUrl);
+    console.log('1. Image ID from Query:', imageId);
     console.log(
-        '3. Is it a blob: URL?',
-        initialUploadedImageUrl?.startsWith('blob:')
+        '2. Retrieved Image URL:',
+        initialUploadedImageUrl ? 'Data URL retrieved' : 'No data'
+    );
+    console.log(
+        '3. Is it a data: URL?',
+        initialUploadedImageUrl?.startsWith('data:')
     );
     console.log('--- DEBUG END ---');
 
@@ -65,10 +68,27 @@ export default function EditorInterface({ params }: EditorInterfaceProps) {
         null
     );
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(
-        initialUploadedImageUrl // ★ 初期値を設定
+        null
     );
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // sessionStorageから画像データを取得してstateを更新
+    useEffect(() => {
+        if (!imageId) return;
+
+        try {
+            const imageData = sessionStorage.getItem(imageId);
+            if (imageData) {
+                setInitialUploadedImageUrl(imageData);
+                setUploadedImageUrl(imageData);
+                // データを取得した後はsessionStorageから削除（メモリリーク防止）
+                sessionStorage.removeItem(imageId);
+            }
+        } catch (error) {
+            console.error('Error retrieving image from sessionStorage:', error);
+        }
+    }, [imageId]);
 
     // 現在表示すべき画像URLを計算 (アップロードがあればそれを優先、なければデフォルト)
     const currentImageUrl = uploadedImageUrl || defaultImageUrl;
@@ -78,37 +98,60 @@ export default function EditorInterface({ params }: EditorInterfaceProps) {
     // 最終的なプロンプトを構築
     const fullPrompt = useMemo(() => {
         const promptParts: string[] = [];
+
+        // 🔹 元画像の忠実再現（最重要）
+        promptParts.push(
+            '元画像の顔の形、髪型、色合い、服装、ポーズ、構図を正確に維持してください。'
+        );
+
+        // 🔹 スタイル適用
         if (selectedStyle) {
             const preset = stylePresets.find((p) => p.id === selectedStyle);
             if (preset) {
-                promptParts.push(`スタイルは${preset.label}で、`);
+                promptParts.push(
+                    `画像の雰囲気を「${preset.label}」の方向に自然に調整してください。`
+                );
+
+                // スタイライズ強度
+                const strength = stylizationStrength[0];
+                if (strength > 70) {
+                    promptParts.push('スタイルの変化を強く反映してください。');
+                } else if (strength < 30) {
+                    promptParts.push('スタイルの変化は控えめにしてください。');
+                } else {
+                    promptParts.push(
+                        'スタイルの変化は中程度に反映してください。'
+                    );
+                }
             }
         }
-        if (selectedStyle && stylizationStrength[0] !== 50) {
-            if (stylizationStrength[0] > 70) {
-                promptParts.push(
-                    `非常に強い${stylizationStrength[0]}%のスタイライズ効果を適用し、`
-                );
-            } else if (stylizationStrength[0] < 30) {
-                promptParts.push(
-                    `控えめな${stylizationStrength[0]}%のスタイライズ効果を適用し、`
-                );
-            } else {
-                promptParts.push(`中程度のスタイライズ効果を適用し、`);
-            }
-        }
+
+        // 🔹 背景
         if (removeBackground) {
-            promptParts.push('背景は完全に透過または白く除去し、');
+            promptParts.push('背景は透過またはシンプルな単色にしてください。');
         }
+
+        // 🔹 元画像との一貫性
         if (maintainConsistency) {
-            promptParts.push('元の画像の主要な被写体の一貫性を保ちつつ、');
+            promptParts.push(
+                '元画像と同じ人物や物体として認識できるようにしてください。'
+            );
         }
+
+        // 🔹 ユーザー指定のカスタム指示
         if (customPrompt) {
             promptParts.push(customPrompt);
-        } else if (!selectedStyle && !removeBackground) {
-            promptParts.push('この画像をより魅力的に編集してください。');
+        } else {
+            promptParts.push('高品質で自然な仕上がりにしてください。');
         }
-        return promptParts.join(' ').trim();
+
+        // 🔹 img2img専用指示
+        promptParts.push(
+            'これはimg2img処理です。元画像を参照して変更してください。'
+        );
+
+        // 🔹 文章を結合
+        return promptParts.join(' ').replace(/\s+/g, ' ').trim();
     }, [
         selectedStyle,
         stylizationStrength,
@@ -118,39 +161,58 @@ export default function EditorInterface({ params }: EditorInterfaceProps) {
     ]);
 
     // ポーリング用のユーティリティ関数 (変更なし)
+    // タスクステータスをポーリングする関数
     const pollTaskStatus = async (
         taskId: string,
         onProgress: (progress: number, message: string) => void
     ): Promise<string> => {
         return new Promise((resolve, reject) => {
-            const intervalId = setInterval(async () => {
+            const interval = setInterval(async () => {
                 try {
                     const response = await fetch(
                         `/api/status?taskId=${taskId}`
                     );
                     const data = await response.json();
 
-                    if (!response.ok || data.error) {
-                        clearInterval(intervalId);
-                        throw new Error(
-                            data.error || 'ポーリング中にエラーが発生しました'
+                    if (!response.ok) {
+                        clearInterval(interval);
+                        return reject(
+                            new Error(
+                                data.error || 'ステータス取得に失敗しました'
+                            )
                         );
                     }
 
-                    const { status, progress, dataUrl } = data;
+                    const progress = data.progress ?? 0;
+                    const status = data.status ?? 'PENDING';
+
+                    // ステータスに応じてメッセージを可視化
+                    let statusMessage = '';
+                    if (status === 'PENDING') statusMessage = '待機中…';
+                    else if (status === 'IN_PROGRESS') {
+                        if (progress < 10) statusMessage = '初期化中…';
+                        else if (progress < 20)
+                            statusMessage = 'モデルを準備しています…';
+                        else if (progress < 30)
+                            statusMessage = 'ノイズを付与しています…';
+                        else if (progress < 90)
+                            statusMessage = `画像生成中… (${progress}%)`;
+                        else if (progress < 100)
+                            statusMessage = '画像を最終処理中…';
+                    } else if (status === 'COMPLETED')
+                        statusMessage = '完了しました！';
+
+                    onProgress(progress, statusMessage);
 
                     if (status === 'COMPLETED') {
-                        clearInterval(intervalId);
-                        resolve(dataUrl);
-                        return;
+                        clearInterval(interval);
+                        return resolve(data.dataUrl);
                     }
-
-                    onProgress(progress, 'AIが画像を生成中...');
-                } catch (error) {
-                    clearInterval(intervalId);
-                    reject(error);
+                } catch (err) {
+                    clearInterval(interval);
+                    reject(err);
                 }
-            }, 3000);
+            }, 3000); // 3秒ごとにポーリング
         });
     };
 
@@ -170,22 +232,83 @@ export default function EditorInterface({ params }: EditorInterfaceProps) {
             setProgress(5);
             setStatusMessage('画像を読み込んでいます…');
 
-            const responseImg = await fetch(sourceImageUrl);
-            const blob = await responseImg.blob();
-            const reader = new FileReader();
+            let base64Image: string;
 
-            const base64Image: string = await new Promise((resolve, reject) => {
-                reader.onloadend = () =>
-                    resolve((reader.result as string).split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
+            // ★ 画像圧縮・リサイズ処理を追加
+            const compressImage = (
+                dataUrl: string,
+                maxWidth: number = 1024,
+                maxHeight: number = 1024,
+                quality: number = 0.8
+            ): Promise<string> => {
+                return new Promise((resolve) => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
 
-            setProgress(15);
+                    img.onload = () => {
+                        // アスペクト比を保持してリサイズ
+                        let { width, height } = img;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = (height * maxWidth) / width;
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = (width * maxHeight) / height;
+                                height = maxHeight;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        // 画像を描画
+                        ctx?.drawImage(img, 0, 0, width, height);
+
+                        // 圧縮してData URLとして出力
+                        const compressedDataUrl = canvas.toDataURL(
+                            'image/jpeg',
+                            quality
+                        );
+                        resolve(compressedDataUrl.split(',')[1]);
+                    };
+
+                    img.src = dataUrl;
+                });
+            };
+
+            if (sourceImageUrl.startsWith('data:')) {
+                // ★ 修正: Data URLの場合は圧縮処理を適用
+                setStatusMessage('画像を圧縮中...');
+                base64Image = await compressImage(sourceImageUrl);
+            } else {
+                // デフォルト画像（/mountain-lake-vista.png）など、通常のURLの場合
+                setStatusMessage('画像をフェッチ中...');
+                const responseImg = await fetch(sourceImageUrl);
+                const blob = await responseImg.blob();
+
+                const reader = new FileReader();
+
+                const dataUrl: string = await new Promise((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+
+                // 通常のURLから取得した画像も圧縮
+                setStatusMessage('画像を圧縮中...');
+                base64Image = await compressImage(dataUrl);
+            }
+
+            // fetch処理を回避したことで、ここから成功率が向上
+            setProgress(5);
             setStatusMessage('Base64形式に変換しました…');
 
             // === Step 2: サーバー送信 ===
-            setProgress(25);
+            setProgress(10);
             setStatusMessage('サーバーにリクエストを送信中…');
 
             const taskStartResponse = await fetch('/api/generate', {
@@ -210,14 +333,17 @@ export default function EditorInterface({ params }: EditorInterfaceProps) {
             }
 
             const taskId = taskStartData.taskId;
-            setProgress(40);
+            setProgress(20);
             setStatusMessage(`処理を開始しました…`);
 
             // === Step 3: ポーリングによる結果待機 ===
-            const finalDataUrl = await pollTaskStatus(taskId, (p, msg) => {
-                setProgress(p);
-                setStatusMessage(msg);
-            });
+            const finalDataUrl = await pollTaskStatus(
+                taskId,
+                (progress, message) => {
+                    setProgress(progress);
+                    setStatusMessage(message);
+                }
+            );
 
             // === Step 4: 完了 ===
             setProgress(100);

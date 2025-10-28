@@ -2,9 +2,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Ghost, ArrowLeft } from 'lucide-react';
 
-/**
- * カスタム404 NotFound ページコンポーネント
- */
 export default function NotFound() {
     return (
         // 1. 全体コンテナ: ダークでシンプルな背景
@@ -31,16 +28,17 @@ export default function NotFound() {
                     ページが見つかりません
                 </h2>
                 <p className="text-base sm:text-lg mb-8 text-white/70">
-                    お探しのAIリソースは、別の次元に迷い込んだようです。
+                    お探しののページは、別の次元に迷い込んだようです。
                 </p>
 
                 {/* 5. 戻るボタン (Linkコンポーネントを使用) */}
-                <Link href="/" passHref legacyBehavior>
+                <Link href="/">
+                    {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */}
                     <Button
                         size="lg"
-                        className="w-full text-lg h-12 rounded-xl 
-                            bg-fuchsia-600 hover:bg-fuchsia-500 
-                            text-white font-bold 
+                        className="w-full text-lg h-12 rounded-xl
+                            bg-fuchsia-600 hover:bg-fuchsia-500
+                            text-white font-bold
                             transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] shadow-md shadow-fuchsia-500/30"
                     >
                         <ArrowLeft className="mr-2 h-5 w-5" />

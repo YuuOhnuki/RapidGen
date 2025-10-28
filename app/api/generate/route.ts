@@ -16,12 +16,17 @@ export async function POST(request: Request) {
 
         // 1. 画像生成タスク開始のエンドポイントを叩く
         const pyResponse = await fetch(PY_API_URL! + '/generate/', {
-            // PY_API_URLは /generate/ を含まないベースURLを想定
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 init_image: base64Image,
-                prompt: userPrompt,
+                prompt:
+                    userPrompt +
+                    '（これはimg2img処理です。元画像を忠実に参照して変更してください。）',
+                strength: 0.3, // 元画像を強く反映
+                guidance_scale: 7.5, // プロンプトを適度に反映
+                num_inference_steps: 50, // 高画質
+                seed: null, // 再現性を必要なら指定
             }),
         });
 

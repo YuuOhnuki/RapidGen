@@ -18,23 +18,24 @@ interface ImageUploadBoxProps {
 export function ImageUploadBox({} /* onNext */ : ImageUploadBoxProps) {
     const [preview, setPreview] = useState<string | null>(null);
     const [fileName, setFileName] = useState<string>('');
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter(); // ★ useRouterを初期化
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && file.type.startsWith('image/')) {
-            setFileName(file.name);
-            setPreview(URL.createObjectURL(file));
-            setSelectedFile(file);
+            const reader = new FileReader(); // ★ 追加
+
+            reader.onloadend = () => {
+                setFileName(file.name);
+                setPreview(reader.result as string); // ★ Data URLを設定
+            };
+
+            reader.readAsDataURL(file); // ★ Data URLとして読み込む
         }
     };
 
     const handleRemove = () => {
-        if (preview) {
-            URL.revokeObjectURL(preview);
-        }
         setPreview(null);
         setFileName('');
         if (fileInputRef.current) {
@@ -46,13 +47,17 @@ export function ImageUploadBox({} /* onNext */ : ImageUploadBoxProps) {
         fileInputRef.current?.click();
     };
 
-    // ★ ページ遷移ロジックに変更
+    // ★ sessionStorageを使用したページ遷移ロジックに変更
     const handleNext = () => {
         if (preview) {
-            // オブジェクトURLをURLセーフな文字列にエンコード
-            const encodedUrl = encodeURIComponent(preview);
-            // クエリパラメータとしてURLを渡す
-            router.push(`/editor?uploadedImageUrl=${encodedUrl}`);
+            // 一意のキーを生成
+            const imageId = `uploaded_image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            // sessionStorageに画像データを保存
+            sessionStorage.setItem(imageId, preview);
+
+            // IDのみをクエリパラメータで渡す
+            router.push(`/editor?imageId=${imageId}`);
         }
     };
     // 以下、デザインは前回の回答と同じ
