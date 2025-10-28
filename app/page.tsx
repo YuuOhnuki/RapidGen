@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ImageUploadBox } from '@/components/ImageUploadBox';
-import { ImageEditor } from '@/components/ImageEditor';
+import ImageEditor from '@/components/ImageEditor';
 
 export default function Home() {
     const [currentScreen, setCurrentScreen] = useState<'upload' | 'editor'>(
@@ -13,10 +13,6 @@ export default function Home() {
     const handleNext = (imageUrl: string) => {
         setSelectedImage(imageUrl);
         setCurrentScreen('editor');
-    };
-
-    const handleBack = () => {
-        setCurrentScreen('upload');
     };
 
     return (
@@ -31,7 +27,7 @@ export default function Home() {
                     </div>
                 </div>
             ) : (
-                <ImageEditor imageUrl={selectedImage} onBack={handleBack} />
+                <ImageEditor imageUrl={selectedImage} />
             )}
         </main>
     );

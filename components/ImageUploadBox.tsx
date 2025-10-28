@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import Image from 'next/image';
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,17 +15,15 @@ interface ImageUploadBoxProps {
 export function ImageUploadBox({ onNext }: ImageUploadBoxProps) {
     const [preview, setPreview] = useState<string | null>(null);
     const [fileName, setFileName] = useState<string>('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && file.type.startsWith('image/')) {
             setFileName(file.name);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            setPreview(URL.createObjectURL(file)); // ← Base64にしない
+            setSelectedFile(file); // File型を保存
         }
     };
 
@@ -72,10 +71,14 @@ export function ImageUploadBox({ onNext }: ImageUploadBoxProps) {
                 ) : (
                     <div className="space-y-4">
                         <div className="relative">
-                            <img
+                            <Image
                                 src={preview || '/placeholder.svg'}
                                 alt="Preview"
                                 className="w-full h-auto rounded-lg"
+                                width={500}
+                                height={500}
+                                sizes="100vw"
+                                style={{ objectFit: 'contain' }}
                             />
                             <Button
                                 variant="destructive"
