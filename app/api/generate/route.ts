@@ -11,11 +11,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Python API の URL（Render / Railway のデプロイ先）
-        const PY_API_URL = process.env.PY_API_URL;
-
         // 1. 画像生成タスク開始のエンドポイントを叩く
-        const pyResponse = await fetch(PY_API_URL! + '/generate/', {
+        const response = await fetch(process.env.API_URL! + '/generate/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -28,13 +25,13 @@ export async function POST(request: Request) {
             }),
         });
 
-        const pyData = await pyResponse.json();
+        const pyData = await response.json();
 
-        if (!pyResponse.ok) {
+        if (!response.ok) {
             // エラーが発生した場合、Python APIからのエラーをそのまま返す
             return NextResponse.json(
                 { error: pyData.detail || 'Python API error' },
-                { status: pyResponse.status } // 適切なステータスコードを返す
+                { status: response.status } // 適切なステータスコードを返す
             );
         }
 

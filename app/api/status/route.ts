@@ -11,17 +11,15 @@ export async function GET(request: Request) {
         );
     }
 
-    const PY_API_URL = process.env.PY_API_URL; // 例: https://my-render-app.onrender.com
-
     // バックエンドのポーリングエンドポイントを叩く
-    const pyResponse = await fetch(`${PY_API_URL}/tasks/${taskId}`);
-    const pyData = await pyResponse.json();
+    const response = await fetch(`${process.env.API_URL}/tasks/${taskId}`);
+    const pyData = await response.json();
 
-    if (!pyResponse.ok) {
+    if (!response.ok) {
         // バックエンドのエラーをそのまま返す
         return NextResponse.json(
             { error: pyData.detail || 'Python API error' },
-            { status: pyResponse.status }
+            { status: response.status }
         );
     }
 
