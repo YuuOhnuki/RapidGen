@@ -43,7 +43,8 @@ interface SidebarProps {
 }
 
 /**
- * AI編集設定サイドバーコンポーネント (Liquid Glass Style - シンプル版)
+ * AI画像生成の設定を行うサイドバーコンポーネント
+ * スタイル選択、詳細調整、画像修正オプションを提供
  */
 export function Sidebar({
     isSidebarOpen,

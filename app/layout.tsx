@@ -75,7 +75,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * ルートレイアウトコンポーネント
+ * アプリケーション全体のルートレイアウトコンポーネント
+ * 共通のHTML構造、フォント設定、メタデータを提供
  */
 export default function RootLayout({
     children,

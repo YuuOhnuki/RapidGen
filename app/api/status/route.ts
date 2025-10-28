@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * タスクステータス監視APIエンドポイント
+ * タスクIDに基づいてPython APIから処理進捗を取得し、
+ * クライアントに結果を返却
+ */
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get('taskId');
@@ -11,7 +16,7 @@ export async function GET(request: Request) {
         );
     }
 
-    // バックエンドのポーリングエンドポイントを叩く
+    // Python APIからタスクの進捗状況を取得
     const response = await fetch(`${process.env.API_URL}/tasks/${taskId}`);
     const pyData = await response.json();
 
@@ -23,7 +28,6 @@ export async function GET(request: Request) {
         );
     }
 
-    // バックエンドからのステータス/結果をそのままフロントエンドに返す
-    // { status: 'IN_PROGRESS' | 'COMPLETED', progress: number, dataUrl?: string }
+    // タスクの状態と進捗をクライアントに返却
     return NextResponse.json(pyData, { status: 200 });
 }

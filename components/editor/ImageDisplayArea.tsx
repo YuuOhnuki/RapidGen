@@ -18,7 +18,8 @@ interface ImageDisplayAreaProps {
 }
 
 /**
- * 画像表示とアップロード/ダウンロード操作を行うコンポーネント (Liquid Glass Style - シンプル版)
+ * 画像表示とファイル操作を行うコンポーネント
+ * オリジナル画像と生成画像の表示、アップロード/リセット機能を提供
  */
 export function ImageDisplayArea({
     currentImageUrl,

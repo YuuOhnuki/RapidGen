@@ -7,13 +7,16 @@ import { Sidebar } from '@/components/editor/Sidebar';
 import { ImageDisplayArea } from '@/components/editor/ImageDisplayArea';
 import { useSearchParams } from 'next/navigation';
 
-// --- DUMMY DATA / PLACEHOLDERS ---
 interface EditorInterfaceProps {
     params: {
         imageUrl?: string;
     };
 }
 
+/**
+ * AI画像生成に使用できるスタイルプリセットの定義
+ * 各プリセットはidとラベルを持つ
+ */
 const stylePresets = [
     { id: 'monochrome', label: 'モノクロ (B&W)' },
     { id: 'vibrant', label: '鮮やか強調' },
@@ -25,6 +28,7 @@ const stylePresets = [
 
 /**
  * 画像編集インターフェースのメインコンポーネント
+ * AI画像生成のためのUI制御と画像処理を行う
  */
 function EditorContent({ params }: EditorInterfaceProps) {
     const searchParams = useSearchParams();
@@ -32,29 +36,10 @@ function EditorContent({ params }: EditorInterfaceProps) {
     // クエリパラメータから画像IDを取得
     const imageId = searchParams.get('imageId');
 
-    // sessionStorageから画像データを取得（クライアントサイドでのみ実行）
-    const [initialUploadedImageUrl, setInitialUploadedImageUrl] = useState<
-        string | null
-    >(null);
-
-    console.log('--- DEBUG START ---');
-    console.log('1. Image ID from Query:', imageId);
-    console.log(
-        '2. Retrieved Image URL:',
-        initialUploadedImageUrl ? 'Data URL retrieved' : 'No data'
-    );
-    console.log(
-        '3. Is it a data: URL?',
-        initialUploadedImageUrl?.startsWith('data:')
-    );
-    console.log('--- DEBUG END ---');
-
     const defaultImageUrl = params.imageUrl
         ? `/${params.imageUrl}.png`
         : '/mountain-lake-vista.png';
-    // --------------------------------------------------
 
-    // --- State管理 ---
     const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState('');
@@ -80,31 +65,28 @@ function EditorContent({ params }: EditorInterfaceProps) {
         try {
             const imageData = sessionStorage.getItem(imageId);
             if (imageData) {
-                setInitialUploadedImageUrl(imageData);
                 setUploadedImageUrl(imageData);
                 // データを取得した後はsessionStorageから削除（メモリリーク防止）
                 sessionStorage.removeItem(imageId);
             }
-        } catch (error) {
-            console.error('Error retrieving image from sessionStorage:', error);
+        } catch {
+            // セッションストレージからの画像取得に失敗した場合は静かに無視
         }
     }, [imageId]);
 
     // 現在表示すべき画像URLを計算 (アップロードがあればそれを優先、なければデフォルト)
     const currentImageUrl = uploadedImageUrl || defaultImageUrl;
 
-    // --- ロジック関数 ---
-
     // 最終的なプロンプトを構築
     const fullPrompt = useMemo(() => {
         const promptParts: string[] = [];
 
-        // 🔹 元画像の忠実再現（最重要）
+        // 元画像の構成要素を維持
         promptParts.push(
             '元画像の顔の形、髪型、色合い、服装、ポーズ、構図を正確に維持してください。'
         );
 
-        // 🔹 スタイル適用
+        // 選択されたスタイルを適用
         if (selectedStyle) {
             const preset = stylePresets.find((p) => p.id === selectedStyle);
             if (preset) {
@@ -126,31 +108,31 @@ function EditorContent({ params }: EditorInterfaceProps) {
             }
         }
 
-        // 🔹 背景
+        // 背景処理
         if (removeBackground) {
             promptParts.push('背景は透過またはシンプルな単色にしてください。');
         }
 
-        // 🔹 元画像との一貫性
+        // 一貫性の維持
         if (maintainConsistency) {
             promptParts.push(
                 '元画像と同じ人物や物体として認識できるようにしてください。'
             );
         }
 
-        // 🔹 ユーザー指定のカスタム指示
+        // カスタムプロンプトの追加
         if (customPrompt) {
             promptParts.push(customPrompt);
         } else {
             promptParts.push('高品質で自然な仕上がりにしてください。');
         }
 
-        // 🔹 img2img専用指示
+        // 画像変換の指示
         promptParts.push(
             'これはimg2img処理です。元画像を参照して変更してください。'
         );
 
-        // 🔹 文章を結合
+        // 最終プロンプトの生成
         return promptParts.join(' ').replace(/\s+/g, ' ').trim();
     }, [
         selectedStyle,
@@ -160,8 +142,9 @@ function EditorContent({ params }: EditorInterfaceProps) {
         maintainConsistency,
     ]);
 
-    // ポーリング用のユーティリティ関数 (変更なし)
-    // タスクステータスをポーリングする関数
+    /**
+     * タスクステータスをポーリングして処理進捗を監視する関数
+     */
     const pollTaskStatus = async (
         taskId: string,
         onProgress: (progress: number, message: string) => void
@@ -216,7 +199,9 @@ function EditorContent({ params }: EditorInterfaceProps) {
         });
     };
 
-    // 画像生成ハンドラ (変更なし)
+    /**
+     * AI画像生成を実行するメイン関数
+     */
     const handleGenerate = async () => {
         if (isProcessing) return;
 
@@ -234,7 +219,7 @@ function EditorContent({ params }: EditorInterfaceProps) {
 
             let base64Image: string;
 
-            // ★ 画像圧縮・リサイズ処理を追加
+            // 画像圧縮・リサイズ処理
             const compressImage = (
                 dataUrl: string,
                 maxWidth: number = 1024,
@@ -281,7 +266,7 @@ function EditorContent({ params }: EditorInterfaceProps) {
             };
 
             if (sourceImageUrl.startsWith('data:')) {
-                // ★ 修正: Data URLの場合は圧縮処理を適用
+                // Data URLの場合は圧縮処理を適用
                 setStatusMessage('画像を圧縮中...');
                 base64Image = await compressImage(sourceImageUrl);
             } else {
@@ -298,12 +283,11 @@ function EditorContent({ params }: EditorInterfaceProps) {
                     reader.readAsDataURL(blob);
                 });
 
-                // 通常のURLから取得した画像も圧縮
+                // 通常のURLから取得した画像も圧縮処理を適用
                 setStatusMessage('画像を圧縮中...');
                 base64Image = await compressImage(dataUrl);
             }
 
-            // fetch処理を回避したことで、ここから成功率が向上
             setProgress(5);
             setStatusMessage('Base64形式に変換しました…');
 
@@ -355,7 +339,6 @@ function EditorContent({ params }: EditorInterfaceProps) {
                     : finalDataUrl;
             setGeneratedImageUrl(finalBase64Data);
         } catch (error) {
-            console.error('画像生成エラー:', error);
             setStatusMessage('エラーが発生しました');
             alert(
                 `画像生成中にエラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`
@@ -370,7 +353,6 @@ function EditorContent({ params }: EditorInterfaceProps) {
         return () => {
             // オブジェクトURLが設定されている場合にのみ解放
             if (uploadedImageUrl && uploadedImageUrl.startsWith('blob:')) {
-                console.log('Revoking URL on unmount:', uploadedImageUrl);
                 URL.revokeObjectURL(uploadedImageUrl);
             }
         };
@@ -383,7 +365,7 @@ function EditorContent({ params }: EditorInterfaceProps) {
             const reader = new FileReader();
 
             reader.onloadend = () => {
-                // ★ 古いオブジェクトURLがあれば解放
+                // 既存のオブジェクトURLがあれば解放してメモリリークを防止
                 if (uploadedImageUrl && uploadedImageUrl.startsWith('blob:')) {
                     URL.revokeObjectURL(uploadedImageUrl);
                 }
@@ -396,8 +378,7 @@ function EditorContent({ params }: EditorInterfaceProps) {
                 setProgress(0);
             };
 
-            reader.onerror = (error) => {
-                console.error('File reading error:', error);
+            reader.onerror = () => {
                 alert('ファイルの読み込み中にエラーが発生しました。');
             };
 
@@ -405,9 +386,11 @@ function EditorContent({ params }: EditorInterfaceProps) {
         }
     };
 
-    // 画像リセットハンドラ
+    /**
+     * アップロードした画像をリセットし、デフォルト画像に戻す関数
+     */
     const handleResetImage = () => {
-        // ★ オブジェクトURLであれば解放
+        // オブジェクトURLを解放してメモリを解放
         if (uploadedImageUrl && uploadedImageUrl.startsWith('blob:')) {
             URL.revokeObjectURL(uploadedImageUrl);
         }
@@ -420,18 +403,15 @@ function EditorContent({ params }: EditorInterfaceProps) {
         }
     };
 
-    // --- 【変更点 C】アンマウント時の解放処理 ---
     useEffect(() => {
         // コンポーネントがアンマウントされる際に実行されるクリーンアップ関数
         return () => {
             if (uploadedImageUrl && uploadedImageUrl.startsWith('blob:')) {
-                console.log('Revoking URL on unmount:', uploadedImageUrl);
                 URL.revokeObjectURL(uploadedImageUrl);
             }
         };
     }, [uploadedImageUrl]); // uploadedImageUrlが変わるたびに前のURLを解放
 
-    // --- レンダリング ---
     return (
         <div
             className="relative flex flex-col lg:flex-row h-screen 
@@ -553,7 +533,8 @@ function EditorContent({ params }: EditorInterfaceProps) {
 }
 
 /**
- * Suspenseでラップしたメインコンポーネント
+ * エディターページのメインエクスポートコンポーネント
+ * Next.jsのSearchParamsを使用するためSuspenseでラップ
  */
 export default function EditorInterface({ params }: EditorInterfaceProps) {
     return (

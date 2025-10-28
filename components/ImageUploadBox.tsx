@@ -1,4 +1,7 @@
-// components/ImageUploadBox.tsx
+/**
+ * 画像アップロードコンポーネント
+ * ユーザーが画像をアップロードし、エディターページに遷移する機能を提供
+ */
 'use client';
 
 import type React from 'react';
@@ -10,28 +13,27 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Upload, X } from 'lucide-react';
 
-// onNext propは不要になりました
 interface ImageUploadBoxProps {
     onNext?: (imageUrl: string) => void;
 }
 
-export function ImageUploadBox({} /* onNext */ : ImageUploadBoxProps) {
+export function ImageUploadBox({}: ImageUploadBoxProps) {
     const [preview, setPreview] = useState<string | null>(null);
     const [fileName, setFileName] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const router = useRouter(); // ★ useRouterを初期化
+    const router = useRouter();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader(); // ★ 追加
+            const reader = new FileReader();
 
             reader.onloadend = () => {
                 setFileName(file.name);
-                setPreview(reader.result as string); // ★ Data URLを設定
+                setPreview(reader.result as string);
             };
 
-            reader.readAsDataURL(file); // ★ Data URLとして読み込む
+            reader.readAsDataURL(file);
         }
     };
 
@@ -47,7 +49,9 @@ export function ImageUploadBox({} /* onNext */ : ImageUploadBoxProps) {
         fileInputRef.current?.click();
     };
 
-    // ★ sessionStorageを使用したページ遷移ロジックに変更
+    /**
+     * アップロードした画像をセッションストレージに保存してエディターページに遷移
+     */
     const handleNext = () => {
         if (preview) {
             // 一意のキーを生成
@@ -60,7 +64,6 @@ export function ImageUploadBox({} /* onNext */ : ImageUploadBoxProps) {
             router.push(`/editor?imageId=${imageId}`);
         }
     };
-    // 以下、デザインは前回の回答と同じ
     const liquidGlassCardClasses =
         'p-8 rounded-3xl backdrop-blur-md bg-white/10 border border-white/20 shadow-xl transition-all duration-300';
     const liquidGlassButtonClasses =

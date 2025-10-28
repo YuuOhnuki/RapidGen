@@ -1,36 +1,158 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RapidGen - AI画像生成・編集ツール
 
-## Getting Started
+RapidGenは、最先端のAI技術を使用した画像生成・編集アプリケーションです。アップロードされた画像に様々なスタイルを適用し、高品質な画像を瞬時に生成できます。
 
-First, run the development server:
+![RapidGen Banner](public/mountain-lake-vista.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 特徴
+
+- **高速AI画像生成**: 最新のAIモデルによる数秒での画像処理
+- **多彩なスタイルプリセット**: モノクロ、アニメ調、ジブリ風、3Dレンダリングなど
+- **詳細な調整機能**: スタイル強度、アスペクト比、背景除去などの細かい設定
+- **直感的なUI**: モダンなGlassmorphismデザインによる使いやすいインターフェース
+- **レスポンシブ対応**: デスクトップからモバイルまで幅広いデバイスに対応
+
+## 🛠️ 技術スタック
+
+- **Frontend**: Next.js 16, React 19, TypeScript
+- **Styling**: Tailwind CSS 4
+- **UI Components**: Radix UI
+- **Icons**: Lucide React
+- **API**: Next.js API Routes
+- **Backend**: Python FastAPI（別途セットアップが必要）
+
+## 📦 インストールと使用方法
+
+### 前提条件
+
+- Node.js 18.0以上
+- npm, yarn, pnpm, または bun
+
+### セットアップ
+
+1. **リポジトリのクローン**
+
+    ```bash
+    git clone https://github.com/your-username/rapidgen.git
+    cd rapidgen
+    ```
+
+2. **依存関係のインストール**
+
+    ```bash
+    npm install
+    # または
+    yarn install
+    # または
+    pnpm install
+    ```
+
+3. **環境変数の設定**
+   `.env.local` ファイルを作成し、以下を設定：
+
+    ```
+    API_URL=http://localhost:8000  # Python APIのURL
+    ```
+
+4. **開発サーバーの起動**
+
+    ```bash
+    npm run dev
+    # または
+    yarn dev
+    # または
+    pnpm dev
+    ```
+
+5. **ブラウザでアクセス**
+   [http://localhost:3000](http://localhost:3000) を開いてアプリケーションを使用
+
+### Python APIサーバーのセットアップ
+
+RapidGenを完全に機能させるには、別途Python APIサーバーが必要です。
+詳細は[API文書](docs/api.md)を参照してください。
+
+## 📁 プロジェクト構造
+
+```
+├── app/                    # Next.js App Router
+│   ├── api/               # API エンドポイント
+│   │   ├── generate/      # 画像生成API
+│   │   └── status/        # ステータス監視API
+│   ├── editor/            # 画像編集ページ
+│   ├── layout.tsx         # ルートレイアウト
+│   └── page.tsx          # ランディングページ
+├── components/            # Reactコンポーネント
+│   ├── editor/           # エディター関連コンポーネント
+│   ├── ui/               # 再利用可能なUIコンポーネント
+│   └── ImageUploadBox.tsx # 画像アップロードコンポーネント
+├── lib/                  # ユーティリティ関数
+├── hooks/               # カスタムReact Hooks
+└── public/              # 静的アセット
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎨 主要コンポーネント
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### `ImageUploadBox`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+画像のアップロードとプレビュー機能を提供
 
-## Learn More
+### `Sidebar`
 
-To learn more about Next.js, take a look at the following resources:
+AI生成設定（スタイル選択、詳細調整）を管理
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### `ImageDisplayArea`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+オリジナル画像と生成画像の表示、ファイル操作
 
-## Deploy on Vercel
+### `DownloadImageButton`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+生成された画像のダウンロード機能
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔧 カスタマイズ
+
+### スタイルプリセットの追加
+
+`app/editor/page.tsx`の`stylePresets`配列に新しいスタイルを追加：
+
+```typescript
+const stylePresets = [
+    // 既存のプリセット...
+    { id: 'your-style', label: 'あなたのスタイル' },
+];
+```
+
+### UIテーマの変更
+
+`app/globals.css`でTailwind CSSの変数を変更してカスタマイズ可能
+
+## 📱 レスポンシブ対応
+
+- **モバイル**: 768px未満
+- **タブレット**: 768px〜1024px
+- **デスクトップ**: 1024px以上
+
+## 🤝 コントリビューション
+
+プロジェクトへの貢献を歓迎します！
+
+1. フォークを作成
+2. 機能ブランチを作成 (`git checkout -b feature/AmazingFeature`)
+3. 変更をコミット (`git commit -m 'Add some AmazingFeature'`)
+4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
+5. Pull Requestを作成
+
+## 📄 ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
+
+## 🙏 謝辞
+
+- [Next.js](https://nextjs.org/) - Reactフレームワーク
+- [Tailwind CSS](https://tailwindcss.com/) - ユーティリティファーストCSSフレームワーク
+- [Radix UI](https://www.radix-ui.com/) - 高品質なReactコンポーネント
+- [Lucide](https://lucide.dev/) - 美しいオープンソースアイコン
+
+## 📧 サポート
+
+質問やサポートが必要な場合は、[Issues](https://github.com/your-username/rapidgen/issues)を作成してください。

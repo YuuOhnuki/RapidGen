@@ -17,13 +17,17 @@ interface DownloadImageButtonProps {
 }
 
 /**
- * 生成された画像をダウンロードするためのボタンコンポーネント (Liquid Glass Style - シンプル版)
+ * AI生成画像のダウンロードボタンコンポーネント
+ * Base64データをPNGファイルとしてダウンロードする機能を提供
  */
 export function DownloadImageButton({
     base64Data,
     isProcessing,
     fileName = 'edited_image.png',
 }: DownloadImageButtonProps) {
+    /**
+     * Base64データをPNGファイルとしてダウンロードする関数
+     */
     const handleDownload = () => {
         if (!base64Data) return;
 
@@ -56,14 +60,12 @@ export function DownloadImageButton({
             // Blob URLを解放
             URL.revokeObjectURL(url);
         } catch (error) {
-            console.error('画像のダウンロード中にエラーが発生しました:', error);
             alert('画像のダウンロードに失敗しました。');
         }
     };
 
     const isDisabled = !base64Data || isProcessing;
 
-    // ダウンロードボタンのスタイルをシンプル化
     const baseStyle =
         'w-full font-semibold text-base py-3 px-4 rounded-lg shadow-md transition-all duration-300';
     const enabledStyle =

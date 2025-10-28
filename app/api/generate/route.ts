@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * AI画像生成APIエンドポイント
+ * クライアントから受信した画像とプロンプトをPython APIに転送し、
+ * 生成タスクを開始してタスクIDを返却
+ */
 export async function POST(request: Request) {
     try {
         const { image: base64Image, prompt: userPrompt } = await request.json();
@@ -11,7 +16,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // 1. 画像生成タスク開始のエンドポイントを叩く
+        // 画像生成タスクを開始
         const response = await fetch(process.env.API_URL! + '/generate/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -35,11 +40,9 @@ export async function POST(request: Request) {
             );
         }
 
-        // 2. Python API から返された task_id をフロントエンドにそのまま返す
-        // pyData: { task_id: string }
+        // Python APIから返されたタスクIDをクライアントに返却
         return NextResponse.json({ taskId: pyData.task_id }, { status: 202 }); // 202 Accepted を使用
     } catch (error) {
-        console.error('=== Error in Next.js API ===', error);
         return NextResponse.json(
             {
                 error: 'Failed to generate image',

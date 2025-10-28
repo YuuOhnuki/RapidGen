@@ -1,5 +1,9 @@
 import { ImageUploadBox } from '@/components/ImageUploadBox';
 
+/**
+ * メインランディングページコンポーネント
+ * RapidGenの機能紹介と画像アップロードフォームを表示
+ */
 export default function UploadPage() {
     return (
         <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white p-4 sm:p-8">
