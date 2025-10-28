@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Menu, X, Zap } from 'lucide-react';
 import { Sidebar } from '@/components/editor/Sidebar';
@@ -26,7 +26,7 @@ const stylePresets = [
 /**
  * 画像編集インターフェースのメインコンポーネント
  */
-export default function EditorInterface({ params }: EditorInterfaceProps) {
+function EditorContent({ params }: EditorInterfaceProps) {
     const searchParams = useSearchParams();
 
     // クエリパラメータから画像IDを取得
@@ -549,5 +549,25 @@ export default function EditorInterface({ params }: EditorInterfaceProps) {
                 )}
             </main>
         </div>
+    );
+}
+
+/**
+ * Suspenseでラップしたメインコンポーネント
+ */
+export default function EditorInterface({ params }: EditorInterfaceProps) {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+                    <div className="text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                        <p>読み込み中...</p>
+                    </div>
+                </div>
+            }
+        >
+            <EditorContent params={params} />
+        </Suspense>
     );
 }
