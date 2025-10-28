@@ -20,13 +20,11 @@ export async function POST(request: Request) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 init_image: base64Image,
-                prompt:
-                    userPrompt +
-                    '（これはimg2img処理です。元画像を忠実に参照して変更してください。）',
-                strength: 0.3, // 元画像を強く反映
-                guidance_scale: 7.5, // プロンプトを適度に反映
-                num_inference_steps: 50, // 高画質
-                seed: null, // 再現性を必要なら指定
+                prompt: userPrompt,
+                strength: 0.3, // 元画像を強く保持
+                guidance_scale: 8, // プロンプトに忠実だが元画像も維持
+                num_inference_steps: 100, // 高画質
+                seed: null, // 毎回変化
             }),
         });
 
