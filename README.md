@@ -33,7 +33,7 @@ RapidGenは、最先端のAI技術を使用した画像生成・編集アプリ�
 1. **リポジトリのクローン**
 
     ```bash
-    git clone https://github.com/your-username/rapidgen.git
+    git clone https://github.com/YuuOhnuki/RapidGen.git
     cd rapidgen
     ```
 
