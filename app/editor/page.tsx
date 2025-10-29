@@ -195,7 +195,7 @@ function EditorContent({ params }: EditorInterfaceProps) {
                     clearInterval(interval);
                     reject(err);
                 }
-            }, 3000); // 3秒ごとにポーリング
+            }, 1000); // 1秒ごとにポーリング
         });
     };
 
